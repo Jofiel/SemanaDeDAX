@@ -14,4 +14,38 @@ Frases: Tomar los datos de ayer y hoy para tomar mejores decisiones mañana.
 3. Presentación Visual (Visualización de Datos).
 4. Distribución de Información. 
 
+Conceptos Básicos:
+
+TABLA TRANSACCIONAL:
+*Es una tabla que contiene registros en intervalos regulares. Las medidas del negocio.
+*Los atrubutos que proporcionan mayor utilidad a una tabla transaccional son aquellos que
+permiten operaciones aritmeticas. Como: Ingresos, Unidades de inventario, Costos.
+*Las tablas transaccionales se caracterizan por tener alta densidad de datos.
+*También se conoce como Tabla Base o Tabla de Hechos.
+*Al crear una relación es donde aparece el asterísco.
+
+TABLAS DE BUSQUEDA:
+*Es una tabla que permite agrupar y restringir datos de una tabla transaccional, son tablas
+que tienen datos de los cuales dependen otros datos.
+*Conocidas como tablas de Dimensión.
+*Se caracterizan por tener baja densidad de datos.
+*Al crear una relacion es donde aparece el 1.
+
+PK (PRIMARY KEY)
+*Es un campo que sirve como identificador unico en una tabla.
+*Estan relacionados con las tablas de busqueda.
+
+FK (Foreign key)
+*Es un campo que se refiere a un campo en otra tabla, pero que son "equivalentes" i.e. sus
+elementos se pueden repetir.
+*Esta relacionado con las tablas transaccionales. 
+
+ELEMENTOS DE POWER BI:
+*Informes: donde creamos la visualización.
+*Datos: limpiamos nuestros datos.
+*Modelo: creamos nuestro modelo de datos.
+
+
+
+
 
