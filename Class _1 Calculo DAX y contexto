@@ -5,7 +5,7 @@ Aparato crítico:
 
 DAX es un lenguaje para el análisis de datos utilizando las tecnologias de Microsoft como Excel, Power BI, SSAS, Vissual Estudio.
 
-Frases: Tomar los datos de ayer y hoy para tomar mejores decisiones mañana.
+** Frases: Tomar los datos de ayer y hoy para tomar mejores decisiones mañana.
 
 * Pilares de Power BI:
 
@@ -51,9 +51,155 @@ RELACIONES DE TABLAS:
 * El asterisco *, se coloca en el campo donde esta la tabla transaccional.
 * La flecha oscura, es la direccion hacia donde van los filtros.
 
+EN POWER BI, ESPECIALMENTE EN DAX:
+* No existe el concepto de celda individual.
+* Solo se hacen referencia a Tablas completas.
+* Palabras con caracteres especiales, como tildes, palabras con espacios, o palabras reservadas van entre comillas simples, ejemplo: 'Información', 'Categoria de Productos', 'Date'.
+* Referencias a columnas completas, por ejemplo: =Pedidos[Ingresos] hacemos referencia a la tabla de Pedidos en particular a la columna de Ingresos.
+
+TIPOS DE DATOS EN DAX:
+* COLUMNAS CALCULADAS: se almacenan en memoria RAM, ojo -eso hace que nuestro modelo se vuelva mas pesado- por eso es mejor minimizarlos.
+* MEDIDAS: no consumen memoria en CPU, ya que solo lo hacen cuando uno las trae a las visualizaciones.
+  Pueden tener un contexto de fila si hay un iterador.
+  Trabajan con el contexto de filtro (sino es consulta).
+* TABLAS CALCULADAS: son almacenadas y recalculadas en actualizacion, i.e., en RAM como las columnas calculadas.
+  Pueden tener contexto de fila y de filtro.
+
+
+COLUMNAS CALCULADAS: es un nuevo campo que se agrega en una tabla existente en el modelo de datos, creada a partir -aunque no es obligatorio- de columnas nativas.
+
+  * Se almacena en memoria, consume RAM. Nos hara mas lento el modelo si se agregan mas.
+  * Se recalculan en el momento de actualizar el reporte.
+  * Trabaja en un CONTEXTO DE FILA, i.e. Itera en una base fila a fila ejecutando la expresion.
+  * Faciles de utilizar e inofensivas para la cardinalidad de columnas baja.
+  * Se visualizan en la seccion de informes y en la seccion de daros en la interfaz.
+
+  CONTEXTO DE FILA: cuando creamos una columna calculada, el motor DAX primero "crea el contexto de fila", es la celda visible donde se esta ejecutando el calculo y es ahi donde se ejecuta la expresion. Es esa fila en el momento en el cual se esta realizando la iteracion.
+
+  QUEREMOS CREAR UNA COLUMNA LLAMADA UTILIDAD:
+    * La utilidad son los ingresos menos los costos totales.
+    Sol: Utilidad = Pedidos[IngresosTotales] - Pedidos[Costo Total]
+
+  QUEREMOS CREAR UNA COLUMNA CALCULADA, QUE NOS IDIQUE EL TIPO DE EMPAQUE SEGUN SU SKU.
+    * Si el Id producto (SKU) comienza con la letra B o C, sera empaque pequeño de lo contrario sera empaque grande.
+    Sol:Empaque = IF(OR(LEFT(Pedidos[SKU],1)= "B",LEFT(Pedidos[SKU],1)="C"), "Empaque Pequeño", "Empaque Grande")
+
+  QUEREMOS LOS INGRESOS TOTALES:
+    Hacemos lo siguiente, creamos una columna calculada: Ingresos Totales = SUM(Pedidos[Ingresos]) 
+    La cual nos regresa en cada fila el total de la suma del campo [Ingresos], esto es porque la funcion SUM
+    no trabaja con el "Contexto de Fila", trabja con el "Contexto de Filtro".
+
+  OJO: NOTODAS LAS FUNCIONES EN DAX TIENEN EN CUENTA EL CONTEXTO DE FILA.
+
+
+  VARIABLES EN DAX: son "lineas de codigo" que nos permiten almacenar el resultado de una expresion bien, sea escalar o tabular, como entrada en otras partes de una expresion DAX. Se debe tener en cuenta que una vez calculada el valor de una variable se mantiene fijo y no cambia.
+
+    Consideraciones:
+      * Cuando creamos una variable "solo existe en la expresion" y no puede ser utilizada en otra.
+      * La palabra reservada VAR introduce la definicion de la variable u RETURN define la expresion que sera retornada.
+      * Facilita la lectura, de las expresiones por eso es recomendable como buena practica.
+      * Si distintas secciones de una expresion se repiten, el uso de variables "optimiza el calculo" en DAX.
+      * Permite dividir problemas complejos en pequeñas tareas a resolver para conseguir un objetivo mayor.
+
+  CREAR COLUMNA CALCULADA, EN LA CUAL RESOLVAMOS EL PROBLEMA
+  Sol:Empaque = IF(OR(LEFT(Pedidos[SKU],1)= "B",LEFT(Pedidos[SKU],1)="C"), "Empaque Pequeño", "Empaque Grande")
+
+  sol_2:
+  Empaque_2 = 
+  VAR PrimeraLetra = OR(LEFT(Pedidos[SKU],1)="B",LEFT(Pedidos[SKU],1)="C") 
+  VAR Prueba = IF(PrimeraLetra, "Empaque Pequeño", "Empaque Grande") 
+  RETURN Prueba
+
+  Esto ayuda a optimizar el codigo.
 
 
 
+
+  TABLAS CALCULADAS:
+    Es una nueva tabla que se agrega al modelo de datos creada a partir (aunque no es obligatorio) de tablas nativas en el propio modelo.
+
+    Consideraciones:
+    * Se almacenan en memoria, i.e., consumen memoria RAM.
+    * Tambien se recalculan con la actualizacion del reporte.
+    * Se relaciona con el contexto de filtro.
+    * Se visualiza en la seccion de vista tablas.
+
+
+    FUNCION VALUES: en su unico parametro recibe ua columna de alguna tabla en el modelo de datos para alli retornar los valores unicos de dicha columna respetando el contexto de filtro.
+
+      VALUES(COLUMNA)
+
+      QUEREMOS UNA TABLA LLAMADA "Paises Unicos" EN LA CUAL ESTEN TODOS LOS PAISES SIN REPETICION.
+
+      Sol: Paises Unicos = VALUES(Pedidos[País])
+      Crea una nueva tabla llamada.
+
+    OJO: Recordemos que habiamos dicho que era un error crear tablas y columnas calculadas porque se almacenan en memoria y consumen RAM, haciendo mas pasado nuetro modelo, entonces para que nos sirven estas funciones? Para crear Medidas que en variables guardemos tablas.
+
+
+    FUNCION ZUMMARIZE: crea un resumen de una tabla especifica agrupada por columnas. Se puede visualizar de manera aproximada como crear la estructura de una tabla dinamica pero con una funcion tabular, creando segmentaciones unicas en el area de filas de la tablas dinamicas y agregando calculos. No se recomienda esta funcion para añadir columnasy calculos, solo para grear agrupaciones.
+
+
+      QUEREMOS CREAR UNA TABLA DE RESUMEN DE INGRESOS POR PAIS.
+
+      Sol:
+      Tabla Dinamica = 
+            SUMMARIZE( Pedidos,
+            Pedidos[País],
+            "Ingresos",
+            SUM(Pedidos[Ingresos])
+            )
+
+    OJO: para poder dar saltos de linea lo hacemos con la combinacion de teclas Shift + Enter.
+
+
+  TABLA CALENDARIOS: Es una tabla de busqueda, que contiene todas las fechas de nuestro modelo. Utiles para analizar fechas en PB.
+
+    CALENDARIO2 = CALENDARAUTO() --Genera de manera automatica una tabla con la fecha mas pequena y la mas grande que encuentra en el modelo.
+
+    --Hay otra forma de generar tablas indicando una fecha inicial y una fecha final.
+
+    Calendario_1 = CALENDAR(DATE(1999,1,1),DATE(2019,12,31))
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS AÑOS
+
+    Sol: Year = YEAR(Calendario_1[Date])
+
+    * CREAR CAMPO CALCULADO QUE GENERE LOS TRIMESTRES
+
+    Sol: Quarter = QUARTER(Calendario_1[Date])
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS MESES:
+
+    sol: Month = MONTH(Calendario_1[Date])
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS NOMBRES DE LOS MESES
+
+    Sol: Name_Month = FORMAT(Calendario_1[Date],"mmmm")
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS DIAS DE LOS MESES
+
+    SOl: Day = DAY(Calendario_1[Date])
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS NUMEROS DE LAS SEMANAS DEL AÑO
+
+    Sol: Week = WEEKNUM( Calendario[Fecha])
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS NUMEROS DE LA SEMANA
+
+    Sol: Num_Week = WEEKDAY(Calendario_1[Date],2)
+
+    * CREAR CAMPO CALCULADO QUE REGRESE LOS NOMBRES DE LA SEMANA
+
+    Sol: DS Nombre = FORMAT( Calendario[Fecha] , "dddd" )
+
+    
+
+
+
+  
+  
+  MEDIDAS:
 
 
 
