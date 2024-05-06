@@ -193,13 +193,5 @@ COLUMNAS CALCULADAS: es un nuevo campo que se agrega en una tabla existente en e
 
     Sol: DS Nombre = FORMAT( Calendario[Fecha] , "dddd" )
 
-    
-
-
-
-  
-  
-  MEDIDAS:
-
 
 
